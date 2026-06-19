@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Calidad - Instalación de PMI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+
+    <nav class="bg-blue-700 text-white p-4 shadow-md flex justify-between items-center">
+        <h1 class="text-xl font-bold">🛠️ Sistema PMI - Control de Calidad</h1>
+        <div id="user-profile" class="text-sm">
+            <span>Conectado como: <strong id="current-user-role">Administrador</strong></span>
+            <button onclick="toggleView()" class="ml-4 bg-blue-900 px-3 py-1 rounded hover:bg-blue-800 transition">Cambiar Vista (Admin/Técnico)</button>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-6 max-w-6xl">
+
+        <section id="admin-panel" class="mb-10 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 class="text-2xl font-semibold text-blue-800 mb-4">👑 Panel de Administración</h2>
+            <p class="text-gray-600 mb-6">Desde aquí puedes gestionar los accesos de los técnicos y descargar el respaldo unificado de Excel.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-gray-50 p-4 rounded border">
+                    <h3 class="font-medium text-lg mb-2">Crear Usuario Técnico / Supervisor</h3>
+                    <form id="user-form" onsubmit="createUser(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-500">Nombre Completo</label>
+                            <input type="text" id="new-user-name" required class="w-full p-2 border rounded text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-gray-500">Rol</label>
+                            <select id="new-user-role" class="w-full p-2 border rounded text-sm">
+                                <option value="Tecnico">Técnico Responsable</option>
+                                <option value="Supervisor">Supervisor</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 text-white py-2 rounded font-bold hover:bg-green-700 transition">Registrar Usuario</button>
+                    </form>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded border flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-medium text-lg mb-2">Sincronización con Microsoft Excel</h3>
+                        <p class="text-sm text-gray-600">Todos los datos recolectados se estructuran automáticamente en formato plano compatible con la nube de Office 365 / Excel mediante Webhooks.</p>
+                    </div>
+                    <button onclick="exportToExcelSimulation()" class="w-full bg-emerald-700 text-white py-3 rounded font-bold flex items-center justify-center gap-2 hover:bg-emerald-800 transition mt-4">
+                        📊 Descargar Base de Datos (Excel .xlsx)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="form-panel" class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2 text-center">FORMATO DE CONTROL DE CALIDAD</h2>
+            <p class="text-center text-sm text-gray-500 mb-6">Instalación de PMI - AAO & AMH</p>
+
+            <form id="pmi-qa-form" onsubmit="processForm(event)">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg mb-6 border">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600">N. Ticket</label>
+                        <input type="text" required class="w-full p-2 border rounded text-sm" placeholder="Ej: TK-1029">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600">Fecha</label>
+                        <input type="date" required class="w-full p-2 border rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600">Hora Inicio</label>
+                        <input type="time" required class="w-full p-2 border rounded text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600">Hora Fin</label>
+                        <input type="time" required class="w-full p-2 border rounded text-sm">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-600">PMI (ID/Nombre)</label>
+                        <input type="text" required class="w-full p-2 border rounded text-sm" placeholder="ID del Punto de Monitoreo Inteligente">
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-600">Dirección</label>
+                        <input type="text" required class="w-full p-2 border rounded text-sm" placeholder="Ubicación exacta">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-800 text-white text-xs uppercase">
+                                <th class="p-3 w-12 text-center">#</th>
+                                <th class="p-3 w-1/4">Ítem</th>
+                                <th class="p-3 w-1/3">Criterio de Aceptación</th>
+                                <th class="p-3 w-24 text-center">Criticidad</th>
+                                <th class="p-3 w-48 text-center">Evaluación</th>
+                                <th class="p-3">Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="items-tbody" class="text-sm divide-y divide-gray-200">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-8 p-6 rounded-xl border-2 grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50" id="result-box">
+                    <div class="md:col-span-2">
+                        <h3 class="text-lg font-bold text-gray-700 mb-2">Observaciones Generales:</h3>
+                        <textarea id="general-observations" rows="3" class="w-full p-2 border rounded-md" placeholder="Añada comentarios adicionales sobre la instalación..."></textarea>
+                    </div>
+                    <div class="flex flex-col justify-center items-center p-4 bg-white rounded-lg border shadow-sm">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Dictamen en Tiempo Real</span>
+                        <div id="live-status" class="text-xl font-black mt-2 text-blue-600">PENDIENTE DE EVALUAR</div>
+                        <p id="live-status-desc" class="text-xs text-gray-500 text-center mt-1">Completa todos los campos críticos y mayores.</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button type="submit" class="bg-blue-700 text-white px-8 py-3 rounded-lg font-bold shadow-md hover:bg-blue-800 transition">
+                        💾 Guardar Inspección y Sincronizar Excel
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+
+    <script>
+        // Datos duros extraídos directamente del PDF original
+        const pmiItems = [
+            { id: 1, cat: "Sujeción y soportería", item: "Fleje corte y broche", desc: "Fleje correctamente cortado y broche armado conforme a procedimiento, sin filos expuestos.", crit: "Mayor" },
+            { id: 2, cat: "Sujeción y soportería", item: "Fleje - tensión", desc: "Fleje con tensión suficiente; sin holgura ni desplazamiento al aplicar fuerza manual.", crit: "Crítico" },
+            { id: 3, cat: "Sujeción y soportería", item: "Tubería Conduit a nivel", desc: "Tubería montada a plomo/nivel respecto al gabinete; sin pandeo visible.", crit: "Mayor" },
+            { id: 4, cat: "Sujeción y soportería", item: "Doblado 'Offset'", desc: "Bayoneta (offset) realizada con dobladora; ángulos uniformes, sin aplastamientos ni quiebres del tubo.", crit: "Mayor" },
+            { id: 5, cat: "Sellado", item: "Sellado caja NEMA", desc: "Empaque/goma integra y comprimida; tapa cierra sin deformaciones; sin huecos visibles.", crit: "Crítico" },
+            { id: 6, cat: "Sellado", item: "Sellado case Fanvil", desc: "Case Fanvil sellado en uniones y entradas de cable; sin filtraciones potenciales.", crit: "Crítico" },
+            { id: 7, cat: "Sellado", item: "Aplicación de sellador", desc: "Aplicación uniforme y limpia (sin escurrimientos ni residuos sobre equipos o gabinete).", crit: "Mayor" },
+            { id: 8, cat: "Sellado", item: "Chapas / cerraduras", desc: "Chapas operan correctamente, cierran y aseguran; llave gira sin forzar.", crit: "Mayor" },
+            { id: 9, cat: "Sellado", item: "Sello de seguridad de caja", desc: "Sello/etiqueta de seguridad colocado, legible y sin daños.", crit: "Menor" },
+            { id: 10, cat: "Cableado externo", item: "Cableado ISP", desc: "Cable del proveedor de internet integro, sin daños, conector firme y sin tensión mecánica.", crit: "Crítico" },
+            { id: 11, cat: "Cableado externo", item: "Conexión eléctrica", desc: "Conexión 110 VCA correcta (fase/neutro/tierra), sin excedentes de cable ni empalmes expuestos.", crit: "Crítico" },
+            { id: 12, cat: "Gabinete NEMA - interior", item: "Conexiones y contactos", desc: "Sin oxidación visible, tornillos apretados, terminales firmes, sin cables sueltos.", crit: "Crítico" },
+            { id: 13, cat: "Gabinete NEMA - interior", item: "Organización y sujeción", desc: "Componentes ordenados y sujetos firmemente a la platina; sin movimiento al manipular.", crit: "Mayor" },
+            { id: 14, cat: "Gabinete NEMA - interior", item: "Cruces UTP / fibra a 90°", desc: "Los cruces entre UTP y fibra se realizan a 90° para minimizar interferencia.", crit: "Mayor" },
+            { id: 15, cat: "Gabinete NEMA - interior", item: "Separación UTP/ voltaje", desc: "Cables UTP separados del cableado de voltaje; sin recorridos paralelos en contacto.", crit: "Crítico" },
+            { id: 16, cat: "Gabinete NEMA - interior", item: "Peinado de cables", desc: "Peinado firme con velcro, sin estrangular cables; radios de doblado adecuados.", crit: "Mayor" },
+            { id: 17, cat: "Gabinete NEMA - interior", item: "Clavijas aseguradas", desc: "Clavijas firmes en su contacto, sin riesgo de desconexión por vibración.", crit: "Mayor" },
+            { id: 18, cat: "Gabinete NEMA - interior", item: "Ventilador", desc: "Ventilador operando, flujo correcto (entrada/salida) y sin obstrucciones.", crit: "Mayor" },
+            { id: 19, cat: "Gabinete NEMA - interior", item: "Etiquetado y puertos", desc: "Cables etiquetados y conectados a los puertos correctos según diagrama.", crit: "Mayor" },
+            { id: 20, cat: "Gabinete NEMA - interior", item: "Cámara con glándula", desc: "Cámara montada con glándula correctamente apretada y sellada contra agua.", crit: "Crítico" },
+            { id: 21, cat: "Funcionamiento", item: "Audio bidireccional sin ruido", desc: "Llamada por Fanvil entra y sale; audio claro en ambos sentidos, sin estática ni eco.", crit: "Crítico" },
+            { id: 22, cat: "Funcionamiento", item: "Video a 3 m de funcionamiento", desc: "Video grabado a 3 m del PMI muestra funcionamiento completo y audio limpio.", crit: "Mayor" },
+            { id: 23, cat: "Limpieza", item: "Limpieza del gabinete", desc: "Gabinete limpio por dentro y por fuera; sin polvo, virutas ni residuos de sellador.", crit: "Menor" },
+            { id: 24, cat: "Limpieza", item: "Limpieza del área de trabajo", desc: "Área de trabajo despejada y limpia; sin material ni herramienta abandonada.", crit: "Menor" },
+            { id: 25, cat: "Evidencia y reporte", item: "Fotos de evidencia (10)", desc: "10 fotos del protocolo §9.3: llegada, números de serie, peinado, equipos/gabinetes limpios, panorámica, microSD, grabación local, speedtest cableado, visión local de cámaras, sellado.", crit: "Crítico" },
+            { id: 26, cat: "Evidencia y reporte", item: "Números de serie legibles", desc: "Números de serie de todos los equipos (incluyendo cambios) registrados, legibles y escritos.", crit: "Mayor" },
+            { id: 27, cat: "Evidencia y reporte", item: "Validación de monitoreo", desc: "Monitoreo confirmó la aceptación del PMI sin pendientes; evidencia subida a la plataforma de reportes.", crit: "Crítico" }
+        ];
+
+        let currentRole = "Administrador";
+
+        // Renderizar dinámicamente la tabla
+        const tbody = document.getElementById('items-tbody');
+        let currentCategory = "";
+
+        pmiItems.forEach(i => {
+            if(i.cat !== currentCategory) {
+                currentCategory = i.cat;
+                const catRow = document.createElement('tr');
+                catRow.className = "bg-blue-50 font-bold text-blue-900";
+                catRow.innerHTML = `<td colspan="6" class="p-2 pl-4 text-sm uppercase tracking-wide">${currentCategory}</td>`;
+                tbody.appendChild(catRow);
+            }
+
+            // Color de criticidad
+            let critColor = "text-gray-600 bg-gray-100";
+            if(i.crit === "Crítico") critColor = "text-red-700 bg-red-50 font-semibold";
+            if(i.crit === "Mayor") critColor = "text-orange-700 bg-orange-50";
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="p-3 text-center font-bold text-gray-500">${i.id}</td>
+                <td class="p-3 font-medium text-gray-900">${i.item}</td>
+                <td class="p-3 text-xs text-gray-600">${i.desc}</td>
+                <td class="p-3 text-center text-xs"><span class="px-2 py-1 rounded ${critColor}">${i.crit}</span></td>
+                <td class="p-3 text-center">
+                    <div class="inline-flex rounded-md shadow-sm" role="group">
+                        <label class="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-l-md hover:bg-gray-100 cursor-pointer flex items-center gap-1">
+                            <input type="radio" name="item-${i.id}" value="Pasa" checked onchange="evaluateFormRules()" class="text-blue-600"> Pasa
+                        </label>
+                        <label class="px-3 py-1.5 text-xs font-medium border-t border-b border-gray-200 hover:bg-gray-100 cursor-pointer flex items-center gap-1">
+                            <input type="radio" name="item-${i.id}" value="No Pasa" onchange="evaluateFormRules()" class="text-red-600"> No Pasa
+                        </label>
+                        <label class="px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-r-md hover:bg-gray-100 cursor-pointer flex items-center gap-1">
+                            <input type="radio" name="item-${i.id}" value="N/A" onchange="evaluateFormRules()" class="text-gray-400"> N/A
+                        </label>
+                    </div>
+                </td>
+                <td class="p-3"><input type="text" placeholder="Obs..." class="w-full p-1 border rounded text-xs"></td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Lógica de cálculo en tiempo real
+        function evaluateFormRules() {
+            let criticosFallo = 0;
+            let mayoresFallo = 0;
+            let menoresFallo = 0;
+
+            pmiItems.forEach(i => {
+                const selector = document.querySelector(`input[name="item-${i.id}"]:checked`);
+                if(selector && selector.value === "No Pasa") {
+                    if(i.crit === "Crítico") criticosFallo++;
+                    if(i.crit === "Mayor") mayoresFallo++;
+                    if(i.crit === "Menor") menoresFallo++;
+                }
+            });
+
+            const statusEl = document.getElementById('live-status');
+            const descEl = document.getElementById('live-status-desc');
+            const boxEl = document.getElementById('result-box');
+
+            if(criticosFallo > 0 || mayoresFallo > 2) {
+                statusEl.innerText = "❌ RECHAZADO GLOBAL";
+                statusEl.className = "text-xl font-black mt-2 text-red-600";
+                descEl.innerText = criticosFallo > 0 ? "Fallo en ítem CRÍTICO detectado." : "Más de 2 ítems MAYORES en Fallo.";
+                boxEl.className = "mt-8 p-6 rounded-xl border-2 grid grid-cols-1 md:grid-cols-3 gap-6 bg-red-50 border-red-300";
+            } else if (menoresFallo > 0) {
+                statusEl.innerText = "⚠️ REQUIERE REPARACIÓN";
+                statusEl.className = "text-xl font-black mt-2 text-amber-600";
+                descEl.innerText = "Items MENORES requieren corrección antes del cierre.";
+                boxEl.className = "mt-8 p-6 rounded-xl border-2 grid grid-cols-1 md:grid-cols-3 gap-6 bg-amber-50 border-amber-300";
+            } else {
+                statusEl.innerText = "✅ APROBADO GLOBAL";
+                statusEl.className = "text-xl font-black mt-2 text-green-600";
+                descEl.innerText = "La instalación cumple con todos los criterios mínimos de calidad.";
+                boxEl.className = "mt-8 p-6 rounded-xl border-2 grid grid-cols-1 md:grid-cols-3 gap-6 bg-green-50 border-green-300";
+            }
+        }
+
+        // Simulación de Roles y Usuarios
+        function toggleView() {
+            const adminPanel = document.getElementById('admin-panel');
+            const currentRoleEl = document.getElementById('current-user-role');
+            if (currentRole === "Administrador") {
+                currentRole = "Técnico";
+                adminPanel.classList.add('hidden');
+            } else {
+                currentRole = "Administrador";
+                adminPanel.classList.remove('hidden');
+            }
+            currentRoleEl.innerText = currentRole;
+        }
+
+        function createUser(e) {
+            e.preventDefault();
+            const name = document.getElementById('new-user-name').value;
+            const role = document.getElementById('new-user-role').value;
+            alert(`Usuario creado exitosamente:\nNombre: ${name}\nRol: ${role}\nYa puede iniciar sesión con sus credenciales de red.`);
+            document.getElementById('user-form').reset();
+        }
+
+        function processForm(e) {
+            e.preventDefault();
+            alert("¡Inspección guardada con éxito! Los datos fueron encolados y sincronizados en la base de datos y la hoja de Excel centralizada.");
+        }
+
+        function exportToExcelSimulation() {
+            alert("Generando y descargando el archivo 'Control_de_Calidad_PMI_Master.xlsx' con las respuestas tabuladas históricas...");
+        }
+
+        // Inicializar
+        evaluateFormRules();
+    </script>
+</body>
+</html>
